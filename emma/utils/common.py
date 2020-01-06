@@ -20,7 +20,7 @@ BILOU_TAG_UNIT = 'U'
 BILOU_TAG_LAST = 'L'
 BILOU_TAG_INTER = 'I'
 
-nlp = spacy.load("en")
+nlp = spacy.load("en_core_web_md")
 RESTRICTED_POS_TAGS = {'PUNCT', 'SYM', 'DET', 'NUM', 'SPACE', 'PART'}
 
 

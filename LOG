@@ -1,0 +1,39 @@
+I2020-01-02 11:29:42,464 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 11:29:42,465 config.py:261 Writing to: .
+I2020-01-02 11:29:42,465 config.py:383 Running: extract_training_data_from_umls.py
+I2020-01-02 11:34:41,695 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 11:34:41,696 config.py:261 Writing to: .
+I2020-01-02 11:34:41,696 config.py:383 Running: extract_training_data_from_umls.py
+I2020-01-02 11:39:02,882 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 11:39:02,883 config.py:261 Writing to: .
+I2020-01-02 11:39:02,883 config.py:383 Running: extract_training_data_from_umls.py
+I2020-01-02 11:40:33,805 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 11:40:33,806 config.py:261 Writing to: .
+I2020-01-02 11:40:33,806 config.py:383 Running: extract_training_data_from_umls.py
+I2020-01-02 11:44:52,665 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 11:44:52,665 config.py:261 Writing to: .
+I2020-01-02 11:44:52,665 config.py:383 Running: /home/medmison690/pyprojects/ontoemma/extract_training_data_from_umls.py
+I2020-01-02 11:45:37,060 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 11:45:37,061 config.py:261 Writing to: .
+I2020-01-02 11:45:37,061 config.py:383 Running: /home/medmison690/pyprojects/ontoemma/extract_training_data_from_umls.py
+I2020-01-02 11:58:32,972 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 11:58:32,973 config.py:261 Writing to: .
+I2020-01-02 11:58:32,973 config.py:383 Running: /home/medmison690/pyprojects/ontoemma/extract_training_data_from_umls.py
+I2020-01-02 12:06:32,708 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 12:06:32,709 config.py:261 Writing to: .
+I2020-01-02 12:06:32,709 config.py:383 Running: /home/medmison690/pyprojects/ontoemma/extract_training_data_from_umls.py
+I2020-01-02 13:15:28,054 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 13:15:28,055 config.py:261 Writing to: .
+I2020-01-02 13:15:28,055 config.py:383 Running: /home/medmison690/pyprojects/ontoemma/extract_training_data_from_umls.py
+I2020-01-02 14:12:55,777 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 14:12:55,779 config.py:261 Writing to: .
+I2020-01-02 14:12:55,780 config.py:383 Running: /home/medmison690/pyprojects/ontoemma/extract_training_data_from_umls.py
+I2020-01-02 15:16:29,247 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 15:16:29,249 config.py:261 Writing to: .
+I2020-01-02 15:16:29,249 config.py:383 Running: /home/medmison690/pyprojects/ontoemma/extract_training_data_from_umls.py
+I2020-01-02 15:19:57,613 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 15:19:57,615 config.py:261 Writing to: .
+I2020-01-02 15:19:57,616 config.py:383 Running: /home/medmison690/pyprojects/ontoemma/extract_training_data_from_umls.py
+I2020-01-02 16:33:54,329 config.py:260 Initialized configuration (UMLSExtractor)
+I2020-01-02 16:33:54,330 config.py:261 Writing to: .
+I2020-01-02 16:33:54,331 config.py:383 Running: /home/medmison690/pyprojects/ontoemma/extract_training_data_from_umls.py

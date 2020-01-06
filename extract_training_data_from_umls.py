@@ -597,8 +597,12 @@ class UMLSExtractor(App):
             output_path = os.path.join(self.OUTPUT_KB_DIR, 'kb-{}-context.json'.format(kb.name))
 
             sys.stdout.write("Loading context dict\n")
+            try:
+                context_dict = pickle.load(open(context_path, 'rb'))
+            except FileNotFoundError as fe:
+                sys.stdout.write('Context file not found!\n')
+                return 
             context_dict = pickle.load(open(context_path, 'rb'))
-
             sys.stdout.write("Adding context to entities\n")
 
             counter = 0

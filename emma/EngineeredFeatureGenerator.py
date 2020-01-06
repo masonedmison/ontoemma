@@ -28,7 +28,7 @@ class EngineeredFeatureGenerator:
         self.tokenizer = RegexpTokenizer(r'[A-Za-z\d]+')
         self.stemmer = SnowballStemmer("english")
         self.lemmatizer = WordNetLemmatizer()
-        self.nlp = spacy.load('en')
+        self.nlp = spacy.load('en_core_web_md')
         self.token_dict = dict()
 
     def _dependency_parse(self, name):

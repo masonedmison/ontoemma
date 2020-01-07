@@ -9,3 +9,4 @@ tests/data/test_nn_model/*
 /tests/data/test_output_alignment.tsv
 tests/data/*.missed
 venv/
+env/

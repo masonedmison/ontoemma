@@ -4,6 +4,7 @@ from lxml import etree
 
 import re
 import rdflib
+from SPARQLWrapper import SPARQLWrapper, JSON, XML
 from emma.utils import file_util
 from emma.kb.kb_utils_refactor import KBEntity, KBRelation, KnowledgeBase
 
@@ -81,6 +82,7 @@ class KBLoader(object):
 
         if len(chunk) > 0:
             yield chunk
+    
 
     # kb_filename=s3://ai2-s2-research/scigraph/data/raw_kbs/dbpedia201510_en/long_abstracts_en.ttl
     @staticmethod
@@ -452,174 +454,220 @@ class KBLoader(object):
         return kb
 
     @staticmethod
-    def import_mesh_kb(kb_name, kb_filename):
+
+    def load_mesh(mesh_endpoint, abbvified=True):
         """
-        Create a KnowledgeBase object with entities and relations from an OWL file
-        :param kb_name:
-        :param kb_filename:
-        :return:
+        Query mesh endpoint for relevant subtree
+        for each result, extract labels, relations, and other interesting property values
+        :param mesh_endpoint: 
+        :abbvified: True if passed in URL is abbvie semaphore endpoint url 
+        :return: kb as xml 
         """
+        disease_query = """
+        PREFIX  skosxl: <http://www.w3.org/2008/05/skos-xl#>
+        PREFIX  owl:  <http://www.w3.org/2002/07/owl#>
+        PREFIX  meshv: <http://id.nlm.nih.gov/mesh/vocab#>
+        PREFIX  smartmesh: <http://vocabularies.smartlogic.com/mesh/>
 
-        # get the description label for this resource id
-        def get_label(l):
-            if l.text is not None:
-                return l.text
-            else:
-                r_id = l.get('{' + ns['rdf'] + '}resource')
-                if r_id in descriptions:
-                    return descriptions[r_id][0]
-            return None
+        CONSTRUCT 
+        { 
+            ?disUri ?disProp ?disObj .
+            ?label skosxl:literalForm ?labelLiteral .
+        }
+        WHERE
+        { ?disUri (meshv:broaderDescriptor)+ <http://id.nlm.nih.gov/mesh/C> .
+            ?disUri  ?disProp ?disObj .
+            OPTIONAL
+            { ?disUri  smartmesh:termLabel  ?label .
+                ?label   skosxl:literalForm   ?labelLiteral
+            }
+        }
+    """
+        # create sparql instance and fetch json results from endpoint
+        sparql = SPARQLWrapper(mesh_endpoint)
+        sparql.setQuery(disease_query)
 
-        assert kb_filename.endswith('.msh') 
+        sparql.setReturnFormat(XML)
+        res = sparql.query().convert()
+        with open('mesh_sema.xml', 'wb') as out:
+            out.write(res.to_xml())
 
+        kb = KnowledgeBase()
+        kb.name = 'mesh'
+    
+        # parse the file
+        try:
+            tree = etree.parse(res)
+        except etree.XMLSyntaxError:
+            p = etree.XMLParser(huge_tree=True)
+            tree = etree.parse(res, parser=p)
+
+        root = tree.getroot()
+
+
+    @staticmethod
+    def load_nci(kb_name, path="C:\\Users\\EDMISML\\Desktop\\ont_align_data\\disease_subtrees\\nci_dis_subset.rdf"):
+        
         # initialize the KB
         kb = KnowledgeBase()
         kb.name = kb_name
 
         # parse the file
         try:
-            tree = etree.parse(kb_filename)
+            tree = etree.parse(path)
         except etree.XMLSyntaxError:
             p = etree.XMLParser(huge_tree=True)
-            tree = etree.parse(kb_filename, parser=p)
+            tree = etree.parse(path, parser=p)
 
         root = tree.getroot()
         ns = root.nsmap
 
-        if None in ns:
-            del ns[None]
-
         # get description dict
-        descriptions = dict()
         for desc in root.findall('rdf:Description', ns):
-            resource_id = desc.get('{' + ns['rdf'] + '}about')
+            # get nci id
+            entity_id = desc.find('ns1:NHC0', ns).text
+            entity = KBEntity(entity_id, None, [], '')
+            entity.canonical_name = desc.find('rdfs:label', ns).text
             try:
-                labels = []
-                for label in desc.findall('rdfs:label', ns):
+                # get definition
+                definition = desc.find('ns1:P97', ns)
+                if definition is not None:
+                    entity.definition = definition 
+                # get alt labels     
+                for label in desc.findall('ns1:P90', ns):
                     if label.text is not None:
-                        labels.append(label.text)
-                if 'skos' in ns:
-                    for label in desc.findall('skos:prefLabel', ns):
-                        if label.text is not None:
-                            labels.append(label.text)
-                if 'oboInOwl' in ns:
-                    for syn in desc.findall('oboInOwl:hasExactSynonym', ns):
-                        if syn.text is not None:
-                            labels.append(syn.text)
-                    for syn in desc.findall('oboInOwl:hasRelatedSynonym', ns) \
-                            + desc.findall('oboInOwl:hasNarrowSynonym', ns) \
-                            + desc.findall('oboInOwl:hasBroadSynonym', ns):
-                        if syn.text is not None:
-                            labels.append(syn.text)
-                if len(labels) > 0:
-                    descriptions[resource_id] = labels
+                        entity.aliases.append(label.text)
+
+                relations = []
+                for sc_rel in desc.findall('rdfs:subClassOf', ns):
+                    target_research_entity_id = sc_rel.get('{' + ns['rdf'] + '}resource', ns)
+                    if isinstance(target_research_entity_id, str):
+                        relation = KBRelation(
+                            relation_type='subClassOf',
+                            entity_ids=[
+                                entity.research_entity_id,
+                                target_research_entity_id
+                            ],
+                            symmetric=False
+                        )
+                        relations.append(relation)
+
             except AttributeError:
                 continue
 
-        # parse TopicalDescriptor classes
-        for cl in root.findall('j.0="http://id.nlm.nih.gov/mesh/vocab#', ns):
-            # get mesh id
-            research_entity_id = cl.get('{' + ns['rdf'] + '}about')
-            # strip mesh id away from rest of uri
-            research_entity_id = research_entity_id.split('/')[-1]
-            # instantiate KB Entity
-            entity = KBEntity(research_entity_id, None, [], '')
+            for rel in relations:
+                kb.add_relation(rel)
+                rel_index = len(kb.relations) - 1
+                entity.relation_ids.append(rel_index)
 
-            # list of KBRelations to add
-            relations = []
+            # add entity to kb
+            kb.add_entity(entity)
 
-            if entity.research_entity_id is not None and entity.research_entity_id != '':
-                try:
-                    labels = []
+            return kb
 
-                    # get rdfs labels
-                    for label in cl.findall('rdfs:label', ns):
-                        l_text = get_label(label)
-                        if l_text is not None:
-                            labels.append(l_text)
+        # parse OWL classes
+        # for cl in root.findall('owl:Class', ns):
+        #     # instantiate an entity.
+        #     research_entity_id = cl.get('{' + ns['rdf'] + '}about')
+        #     entity = KBEntity(research_entity_id, None, [], '')
 
-                    # add labels from description
-                    if entity.research_entity_id in descriptions:
-                        labels += descriptions[entity.research_entity_id]
+        #     # list of KBRelations to add
+        #     relations = []
 
-                    # get skos labels
-                    if 'skos' in ns:
-                        for label in cl.findall('skos:prefLabel', ns):
-                            l_text = get_label(label)
-                            if l_text is not None:
-                                labels.append(l_text)
-                        for label in cl.findall('skos:altLabel', ns):
-                            l_text = get_label(label)
-                            if l_text is not None:
-                                labels.append(l_text)
-                        for label in cl.findall('skos:hiddenLabel', ns):
-                            l_text = get_label(label)
-                            if l_text is not None:
-                                labels.append(l_text)
+        #     if entity.research_entity_id is not None and entity.research_entity_id != '':
+        #         try:
+        #             labels = []
 
-                    # get synonyms
-                    if 'oboInOwl' in ns:
-                        for syn in cl.findall('oboInOwl:hasExactSynonym', ns):
-                            l_text = get_label(syn)
-                            if l_text is not None:
-                                labels.append(l_text)
-                        for syn in cl.findall('oboInOwl:hasRelatedSynonym', ns) \
-                                + cl.findall('oboInOwl:hasNarrowSynonym', ns) \
-                                + cl.findall('oboInOwl:hasBroadSynonym', ns):
-                            l_text = get_label(syn)
-                            if l_text is not None:
-                                labels.append(l_text)
+        #             # get rdfs labels
+        #             for label in cl.findall('rdfs:label', ns):
+        #                 l_text = get_label(label)
+        #                 if l_text is not None:
+        #                     labels.append(l_text)
 
-                    # set canonical_name and aliases
-                    if len(labels) > 0:
-                        entity.canonical_name = labels[0]
-                        entity.aliases = list(
-                            set([lab.lower() for lab in labels])
-                        )
+        #             # add labels from description
+        #             if entity.research_entity_id in descriptions:
+        #                 labels += descriptions[entity.research_entity_id]
 
-                    # if no name available (usually entity from external KB), replace name with id
-                    if entity.canonical_name is None:
-                        entity.canonical_name = entity.research_entity_id
+        #             # get skos labels
+        #             if 'skos' in ns:
+        #                 for label in cl.findall('skos:prefLabel', ns):
+        #                     l_text = get_label(label)
+        #                     if l_text is not None:
+        #                         labels.append(l_text)
+        #                 for label in cl.findall('skos:altLabel', ns):
+        #                     l_text = get_label(label)
+        #                     if l_text is not None:
+        #                         labels.append(l_text)
+        #                 for label in cl.findall('skos:hiddenLabel', ns):
+        #                     l_text = get_label(label)
+        #                     if l_text is not None:
+        #                         labels.append(l_text)
 
-                    # get definition
-                    if 'skos' in ns:
-                        for definition in cl.findall('skos:definition', ns):
-                            if definition.text is not None:
-                                entity.definition += definition.text.lower(
-                                ) + ' '
-                    if 'obo' in ns:
-                        for definition in cl.findall('obo:IAO_0000115', ns):
-                            if definition.text is not None:
-                                entity.definition += definition.text.lower(
-                                ) + ' '
-                    entity.definition = entity.definition.strip()
+        #             # get synonyms
+        #             if 'oboInOwl' in ns:
+        #                 for syn in cl.findall('oboInOwl:hasExactSynonym', ns):
+        #                     l_text = get_label(syn)
+        #                     if l_text is not None:
+        #                         labels.append(l_text)
+        #                 for syn in cl.findall('oboInOwl:hasRelatedSynonym', ns) \
+        #                         + cl.findall('oboInOwl:hasNarrowSynonym', ns) \
+        #                         + cl.findall('oboInOwl:hasBroadSynonym', ns):
+        #                     l_text = get_label(syn)
+        #                     if l_text is not None:
+        #                         labels.append(l_text)
 
-                    # get subclass relations
-                    for sc_rel in cl.findall('rdfs:subClassOf', ns):
-                        target_research_entity_id = sc_rel.get('{' + ns['rdf'] + '}resource', ns)
-                        if isinstance(target_research_entity_id, str):
-                            relation = KBRelation(
-                                relation_type='subClassOf',
-                                entity_ids=[
-                                    entity.research_entity_id,
-                                    target_research_entity_id
-                                ],
-                                symmetric=False
-                            )
-                            relations.append(relation)
-                except AttributeError:
-                    pass
+        #             # set canonical_name and aliases
+        #             if len(labels) > 0:
+        #                 entity.canonical_name = labels[0]
+        #                 entity.aliases = list(
+        #                     set([lab.lower() for lab in labels])
+        #                 )
 
-                # add relations to entity and to kb
-                for rel in relations:
-                    kb.add_relation(rel)
-                    rel_index = len(kb.relations) - 1
-                    entity.relation_ids.append(rel_index)
+        #             # if no name available (usually entity from external KB), replace name with id
+        #             if entity.canonical_name is None:
+        #                 entity.canonical_name = entity.research_entity_id
 
-                # add entity to kb
-                kb.add_entity(entity)
+        #             # get definition
+        #             if 'skos' in ns:
+        #                 for definition in cl.findall('skos:definition', ns):
+        #                     if definition.text is not None:
+        #                         entity.definition += definition.text.lower(
+        #                         ) + ' '
+        #             if 'obo' in ns:
+        #                 for definition in cl.findall('obo:IAO_0000115', ns):
+        #                     if definition.text is not None:
+        #                         entity.definition += definition.text.lower(
+        #                         ) + ' '
+        #             entity.definition = entity.definition.strip()
 
-        return kb
+        #             # get subclass relations
+        #             for sc_rel in cl.findall('rdfs:subClassOf', ns):
+        #                 target_research_entity_id = sc_rel.get('{' + ns['rdf'] + '}resource', ns)
+        #                 if isinstance(target_research_entity_id, str):
+        #                     relation = KBRelation(
+        #                         relation_type='subClassOf',
+        #                         entity_ids=[
+        #                             entity.research_entity_id,
+        #                             target_research_entity_id
+        #                         ],
+        #                         symmetric=False
+        #                     )
+        #                     relations.append(relation)
+        #         except AttributeError:
+        #             pass
+
+        #         # add relations to entity and to kb
+        #         for rel in relations:
+        #             kb.add_relation(rel)
+        #             rel_index = len(kb.relations) - 1
+        #             entity.relation_ids.append(rel_index)
+
+        #         # add entity to kb
+        #         kb.add_entity(entity)
+
+        # return kb
+
+
 
     @staticmethod
     def import_kb(kb_name, kb_filename):

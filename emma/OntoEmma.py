@@ -66,6 +66,10 @@ class OntoEmma:
         elif kb_path.endswith('.owl') or kb_path.endswith('.rdf') or \
             kb_path.endswith('.OWL') or kb_path.endswith('.RDF'):
             kb = KBLoader.import_owl_kb(kb_name, kb_path)
+        elif kb_path.endswith('.msh'):
+            kb = KBLoader.load_mesh(kb_name, kb_path)
+        elif kb_path.endswith('.nci'):
+            kb = KBLoader.load_nci(kb_name, kb_path)
         elif kb_path.endswith('.ttl') or kb_path.endswith('.n3'):
             sys.stdout.write('This program cannot parse your file type.\n')
             raise NotImplementedError()

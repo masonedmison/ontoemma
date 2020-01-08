@@ -10,3 +10,4 @@ tests/data/test_nn_model/*
 tests/data/*.missed
 venv/
 env/
+.gitignore

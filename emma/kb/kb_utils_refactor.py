@@ -475,8 +475,7 @@ class KnowledgeBase(object):
                 self.research_entity_id_to_entity_index[research_entity_id]
             ]
         else:
-            # FOR DEBUGGING
-            print('LEN OF ENT ID TO INDEX', len(self.research_entity_id_to_entity_index))
+            print('ENT ID', research_entity_id)
             return None
 
     def get_entity_by_raw_id(self, raw_id):

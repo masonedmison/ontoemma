@@ -11,3 +11,4 @@ tests/data/*.missed
 venv/
 env/
 .gitignore
+isolate.py

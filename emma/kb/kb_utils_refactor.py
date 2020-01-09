@@ -253,8 +253,17 @@ class KnowledgeBase(object):
         :return:
         """
         json_ent = ent_to_json.form_json()
-        json_ent['par_relations'] = [self.get_entity_by_research_entity_id(e).form_json()
-                                     for e in ent_to_json.additional_details['par_relations'] if e is not None]
+        #     json_ent['par_relations'] = [self.get_entity_by_research_entity_id(e).form_json()
+        #                          for e in ent_to_json.additional_details['par_relations'] if e is not None]
+        # TODO resolve NCI disease subtree so we do not need this extra check
+        json_ent['par_relations'] = []
+        for e in ent_to_json.additional_details['par_relations']:
+            if e is None:
+                continue
+            ent_by_id = self.get_entity_by_research_entity_id(e)
+            if ent_by_id is not None:
+                json_ent['par_relations'].append(ent_by_id.form_json())
+    
         json_ent['chd_relations'] = [self.get_entity_by_research_entity_id(e).form_json()
                                      for e in ent_to_json.additional_details['chd_relations'] if e is not None]
         json_ent['sib_relations'] = [self.get_entity_by_research_entity_id(e).form_json()
@@ -466,6 +475,8 @@ class KnowledgeBase(object):
                 self.research_entity_id_to_entity_index[research_entity_id]
             ]
         else:
+            # FOR DEBUGGING
+            print('LEN OF ENT ID TO INDEX', len(self.research_entity_id_to_entity_index))
             return None
 
     def get_entity_by_raw_id(self, raw_id):

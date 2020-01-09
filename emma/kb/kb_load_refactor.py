@@ -4,7 +4,6 @@ from lxml import etree
 
 import re
 import rdflib
-from SPARQLWrapper import SPARQLWrapper, JSON, XML
 from emma.utils import file_util
 from emma.kb.kb_utils_refactor import KBEntity, KBRelation, KnowledgeBase
 
@@ -468,9 +467,9 @@ class KBLoader(object):
 
         root = tree.getroot()
         ns = root.nsmap
-
+        desc_iter = root.findall('rdf:Description', ns)
         # get description dict
-        for desc in root.findall('rdf:Description', ns):
+        for desc in desc_iter:
             # get nci id
             entity_id = desc.find('meshv:identifier', ns).text
             entity = KBEntity(entity_id, None, [], '')
@@ -483,7 +482,7 @@ class KBLoader(object):
 
                 relations = []
                 for sc_rel in desc.findall('meshv:broaderDescriptor', ns):
-                    target_research_entity_id = sc_rel.get('{' + ns['rdf'] + '}resource', ns)
+                    target_research_entity_id = sc_rel.get('{' + ns['rdf'] + '}resource', ns).split('/')[-1].strip()
                     if isinstance(target_research_entity_id, str):
                         relation = KBRelation(
                             relation_type='subClassOf',
@@ -496,6 +495,7 @@ class KBLoader(object):
                         relations.append(relation)
 
             except AttributeError:
+                print(f'skipping {entity_id} in load_mesh')
                 continue
 
             for rel in relations:
@@ -506,7 +506,7 @@ class KBLoader(object):
             # add entity to kb
             kb.add_entity(entity)
 
-            return kb
+        return kb
 
 
     @staticmethod
@@ -526,18 +526,19 @@ class KBLoader(object):
         root = tree.getroot()
         ns = root.nsmap
 
-
         # get description dict
+        desc_iter = root.findall('rdf:Description', ns)
+        print('LEN OF RESOURCES', len(desc_iter))
         for desc in root.findall('rdf:Description', ns):
             # get nci id
-            entity_id = desc.find('ns1:NHC0', ns).text
+            entity_id = str(desc.find('ns1:NHC0', ns).text.strip())
             entity = KBEntity(entity_id, None, [], '')
             entity.canonical_name = desc.find('rdfs:label', ns).text
             try:
                 # get definition
                 definition = desc.find('ns1:P97', ns)
                 if definition is not None:
-                    entity.definition = definition 
+                    entity.definition = definition.text
                 # get alt labels     
                 for label in desc.findall('ns1:P90', ns):
                     if label.text is not None:
@@ -545,7 +546,11 @@ class KBLoader(object):
 
                 relations = []
                 for sc_rel in desc.findall('rdfs:subClassOf', ns):
-                    target_research_entity_id = sc_rel.get('{' + ns['rdf'] + '}resource', ns)
+                    try:
+                        target_research_entity_id = str(sc_rel.get('{' + ns['rdf'] + '}resource', ns).split('#')[-1].strip())
+                    except AttributeError as ae:
+                        print(f'skipping element {sc_rel.attrib}')
+                        continue
                     if isinstance(target_research_entity_id, str):
                         relation = KBRelation(
                             relation_type='subClassOf',
@@ -557,7 +562,8 @@ class KBLoader(object):
                         )
                         relations.append(relation)
 
-            except AttributeError:
+            except AttributeError as ae:
+                print(f'skipping {entity_id} in load_nci')
                 continue
 
             for rel in relations:
@@ -568,7 +574,8 @@ class KBLoader(object):
             # add entity to kb
             kb.add_entity(entity)
 
-            return kb
+        return kb
+
 
     @staticmethod
     def import_kb(kb_name, kb_filename):

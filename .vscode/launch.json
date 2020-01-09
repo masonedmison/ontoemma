@@ -9,13 +9,13 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
-            // "args": [
-            //     "-p", "lr",
-            //     "-m", "/home/medmison690/Documents/ont_align_data/ontoemma/models/OntoEmmaLRModel",
-            //    "-s", "/home/medmison690/Documents/ont_align_data/disease_subtrees/mesh_dis.rdf",
-            //     "-t", "/home/medmison690/Documents/ont_align_data/disease_subtrees/nci_dis_subset.rdf",
-            //      "-o", "output_alignment.tsv"
+            "console": "integratedTerminal",
+            "args": [
+                "-p", "lr",
+                "-m", "/home/medmison690/Documents/ont_align_data/ontoemma/models/OntoEmmaLRModel",
+               "-s", "/home/medmison690/Documents/ont_align_data/disease_subtrees/mesh_dis.msh",
+                "-t", "/home/medmison690/Documents/ont_align_data/disease_subtrees/nci_dis_subset.nci",
+                 "-o", "output_alignment.tsv"
             ]
         },
         {

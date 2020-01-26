@@ -11,11 +11,17 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
+            // align mode using LR model 
                 "-p", "lr",
                 "-m", "/home/medmison690/Documents/ont_align_data/ontoemma/models/OntoEmmaLRModel",
                "-s", "/home/medmison690/Documents/ont_align_data/disease_subtrees/mesh_dis.msh",
                 "-t", "/home/medmison690/Documents/ont_align_data/disease_subtrees/nci_dis_subset.nci",
                  "-o", "output_alignment.tsv"
+            //-----------
+            // train using NN model
+            // "-p", "nn",
+            // "-m", "/home/medmison690/Documents/ont_align_data/ontoemma/models/OntoEmmaNNModel",
+            // "-c", "/home/medmison690/pyprojects/ontoemma/config/ontoemma_nn_all.json"
             ]
         },
         {

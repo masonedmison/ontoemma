@@ -17,14 +17,14 @@
       }
     }
   },
-  "train_data_path": "data/ontoemma.enriched.train",
-  "validation_data_path": "data/ontoemma.enriched.dev",
+  "train_data_path": "/home/medmison690/Documents/ont_align_data/ontoemma/training/ontoemma.context.train", 
+  "validation_data_path":"/home/medmison690/Documents/ont_align_data/ontoemma/training/ontoemma.context.train", 
   "model": {
     "type": "ontoemmaNN",
     "name_embedder": {
       "tokens": {
         "type": "embedding",
-        "pretrained_file": "data/embeddings/weights300.txt.gz",
+        "pretrained_file":"/home/medmison690/Documents/ont_align_data/ontoemma/training/embeddings300.txt.gz", 
         "embedding_dim": 300,
         "trainable": false
       },
@@ -45,7 +45,7 @@
     "definition_embedder": {
       "tokens": {
         "type": "embedding",
-        "pretrained_file": "data/embeddings/weights300.txt.gz",
+        "pretrained_file":"/home/medmison690/Documents/ont_align_data/ontoemma/training/embeddings300.txt.gz", 
         "embedding_dim": 300,
         "trainable": false
       }

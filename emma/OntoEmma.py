@@ -423,6 +423,7 @@ class OntoEmma:
         :param source_kb:
         :param target_kb:
         :param candidate_selector:
+        :param get_literals: if True append s_ent and t_ent canonical name and aliases to alignment list
         :return:
         """
 
@@ -449,7 +450,10 @@ class OntoEmma:
                 )]
                 score = model.predict_entity_pair(features)
                 if score[0][1] >= constants.LR_SCORE_THRESHOLD:
-                    alignment.append((s_ent_id, t_ent_id, score[0][1]))
+                    s_aliases = ", ".join(s_ent.aliases)
+                    t_aliases = ", ".join(t_ent.aliases)
+                    alignment.append([s_ent_id, s_ent.canonical_name, s_aliases,
+                    t_ent_id, t_ent.canonical_name, t_aliases, score[0][1]])
 
         return alignment
 
@@ -544,7 +548,7 @@ class OntoEmma:
         return alignment, s_remaining, t_remaining
 
     @staticmethod
-    def _apply_best_alignment_strategy(sim_scores):
+    def _apply_best_alignment_strategy(sim_scores, s_kb, t_kb):
         """
         Use BEST alignment strategy; find best match for each source entity above threshold
         :param scores:
@@ -562,8 +566,14 @@ class OntoEmma:
             if len(matches) > 0:
                 m_sort = sorted(matches, key=lambda p: p[1], reverse=True)
                 if m_sort[0][1] >= constants.SIM_SCORE_THRESHOLD:
-                    alignment.append((s_ent_id, m_sort[0][0], m_sort[0][1]))
-
+                    # alignment.append((s_ent_id, m_sort[0][0], m_sort[0][1]))
+                    s_ent = s_kb.get_entity_by_research_entity_id(s_ent_id)
+                    t_ent_id = m_sort[0][0]
+                    t_ent = t_kb.get_entity_by_research_entity_id(t_ent_id)
+                    s_aliases = ", ".join(s_ent.aliases)
+                    t_aliases = ", ".join(t_ent.aliases)
+                    alignment.append([s_ent_id, s_ent.canonical_name, s_aliases,
+                    t_ent_id, t_ent.canonical_name, t_aliases, m_sort[0][1]])
         return alignment
 
     @staticmethod
@@ -624,7 +634,7 @@ class OntoEmma:
         :return:
         """
         if align_strat == "best":
-            return self._apply_best_alignment_strategy(n_scores)
+            return self._apply_best_alignment_strategy(n_scores, s_kb, t_kb)
         elif align_strat == "all":
             return self._apply_all_alignment_strategy(n_scores)
         elif align_strat == "modh":
@@ -963,11 +973,14 @@ class OntoEmma:
         :return:
         """
         with open(output_path, 'w') as outf:
-            for s_ent, t_ent, pred in sorted(
-                alignment, key=lambda x: x[2], reverse=True
+            for align in sorted(
+                alignment, key=lambda x: x[-1], reverse=True
             ):
+                # cast score value as str
+                align[-1] = str(align[-1])
+                align_j = '\t'.join(align)
                 outf.write(
-                    "%s\t%s\t%s\t%s\n" % (s_ent, t_ent, pred, "OntoEmma")
+                    align_j + '\n'
                 )
         return
 

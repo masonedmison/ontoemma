@@ -8,6 +8,8 @@ import ssl
 from emma.OntoEmma import OntoEmma
 import emma.constants
 
+# sample call to train NN model:
+# python train_ontoemma.py -p nn -m /home/medmison690/Documents/ont_align_data/ontoemma/models/OntoEmmaNNModel -c /home/medmison690/pyprojects/ontoemma/config/ontoemma_nn_all.json
 
 def main(argv):
     model_path = None

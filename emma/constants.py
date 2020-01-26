@@ -12,7 +12,7 @@ IMPLEMENTED_ALIGNMENT_STRATEGY = {"best": "Select the best match for each source
                                   "modh": "Modified Hungarian algorithm for assignment"}
 
 # Score threshold for positive alignment
-SIM_SCORE_THRESHOLD = 0.90
+SIM_SCORE_THRESHOLD = 0.80
 
 # Minimum size for training data
 MIN_TRAINING_SET_SIZE = 10

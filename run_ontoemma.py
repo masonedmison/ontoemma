@@ -9,7 +9,12 @@ from emma.OntoEmma import OntoEmma
 import emma.constants
 
 """call to my machine with correct paths 
+FOR LR MODEL
 python run_ontoemma.py -p lr -m /home/medmison690/Documents/ont_align_data/ontoemma/models/OntoEmmaLRModel -s /home/medmison690/Documents/ont_align_data/disease_subtrees/mesh_dis.msh -t /home/medmison690/Documents/ont_align_data/disease_subtrees/nci_dis_subset.nci -o /home/medmison690/Documents/ont_align_data/align_output/output_alignment.tsv 
+
+FOR NN MODEL
+python run_ontoemma.py -p lr -m /home/medmison690/Documents/ont_align_data/ontoemma/models/OntoEmmaLRModel -s /home/medmison690/Documents/ont_align_data/disease_subtrees/mesh_dis.msh -t /home/medmison690/Documents/ont_align_data/disease_subtrees/nci_dis_subset.nci -o /home/medmison690/pyprojects/ontoemma/config/ontoemma_nn_all.json
+
 """
 
 def main(argv):
